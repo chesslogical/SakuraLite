@@ -1,5 +1,5 @@
 <?php
-// SakuraLite: A Small BBS Created By LexiTsunami (Version 1)
+// SakuraLite: A Small BBS Created By LexiTsunami (Version 1.1)
 // Stay up to date @ https://github.com/LexiTsunami/SakuraLite
 
 // Aesthetics
@@ -141,7 +141,7 @@ function buildpages(array $posts): void {
 }
 
 function genpage(array $posts, int $pagenumber, int $totalpages): string {
-    global $title, $subtitle, $background, $textcolor, $linkcolor, $linkhover, $fonts, $formsidecolor, $sakuralitefile, $defaultname, $forcedanonymity, $deletionphrase, $posternamecolor, $bulletpoints;
+    global $title, $subtitle, $background, $textcolor, $linkcolor, $linkhover, $fonts, $formsidecolor, $sakuralitefile, $defaultname, $forcedanonymity, $deletionphrase, $posternamecolor, $bulletpoints, $postbackground;
 
     $pagetitle = $title ?: 'SakuraLite BBS';
     $pagesubtitle = $subtitle ? '<h3>'.$subtitle.'</h3>' : '';
@@ -149,15 +149,15 @@ function genpage(array $posts, int $pagenumber, int $totalpages): string {
     $posthtml = '';
     foreach ($posts as $post) {
       if($post['deleted'] > 0) { $comment = "<i>".$deletionphrase."</i>"; } else { $comment = nl2br(htmlspecialchars($post['comment'])); }
-      $displayName = htmlspecialchars($post['name']);
-      if($post['deleted'] > 0) { $displayName = $defaultname; }
+      $displayname = htmlspecialchars($post['name']);
+      if($post['deleted'] > 0) { $displayname = $defaultname; }
       if($post['deleted'] == 0) {
         if ($post['email'] !== '' && filter_var(base64_decode($post['email']), FILTER_VALIDATE_EMAIL)) {
-            $displayName = '<a href="mailto:'.htmlspecialchars(base64_decode($post['email'])).'">'.$displayName.'</a>';
+            $displayname = '<a href="mailto:'.htmlspecialchars(base64_decode($post['email'])).'">'.$displayname.'</a>';
         }
       }
-        $posthtml .= '<div style="padding:8px;padding-top:5px;margin-bottom:5px;background-color:#F0E0D6;">
-            <span style="color:'.$posternamecolor.';"><b>'.$displayName.'</b></span>
+        $posthtml .= '<div style="padding:8px;padding-top:5px;margin-bottom:5px;background-color:'.$postbackground.';">
+            <span style="color:'.$posternamecolor.';"><b>'.$displayname.'</b></span>
             <span>'.$post['time'].'</span>
             <span style="float:right;">#'.$post['num'].'</span>
             <div>'.$comment.'</div>
@@ -421,11 +421,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $name = preg_replace_callback('/(.)'.$tripsymbol.'(.)/', fn($m) => $m[1].$tripfake.$m[2], $name);
 
     if (strpos($name, '#') !== false) {
-        [$displayName, $trip] = explode('#', $name, 2);
+        [$displayname, $trip] = explode('#', $name, 2);
         $trip = substr($trip, 0, 255);
         $salt = strtr(preg_replace('/[^\.\/0-9A-Za-z]/', '.', substr($trip.'H.',1,2)), ':;<=>?@[\\]^_`', 'A-Ga-f');
         $tripcode = $tripsymbol . substr(crypt($trip, $salt), -10);
-        $name = $displayName.$tripcode;
+        $name = $displayname.$tripcode;
     }
 
     $name = $name ?: $defaultname;
