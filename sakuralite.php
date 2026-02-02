@@ -1,6 +1,6 @@
 <?php
-// SakuraLite: A Small BBS Created By LexiTsunami (Version 1.2)
-// Stay up to date @ https://github.com/LexiTsunami/SakuraLite
+// SakuraLite: A Small BBS Created By UnderwoodSoy (Version 1.2)
+// Stay up to date @ https://github.com/UnderwoodSoy/SakuraLite
 
 // Aesthetics
 $title = ''; // The title of your BBS. This will show at the top of the page and in the tab's title. Leave it blank to use the default title.
