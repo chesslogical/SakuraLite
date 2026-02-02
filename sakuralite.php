@@ -46,7 +46,7 @@ $badstrings = [ // Phrases listed in here will be prohibited from being used in 
 ini_set('default_charset', 'UTF-8');
 
 if (version_compare(PHP_VERSION, '7.4.0', '<')) {
-    die('<a href="//github.com/LexiTsunami/SakuraLite">SakuraLite</a> requires PHP 7.4 or newer. You are currently running PHP ' . PHP_VERSION);
+    die('<a href="//github.com/UnderwoodSoy/SakuraLite">SakuraLite</a> requires PHP 7.4 or newer. You are currently running PHP ' . PHP_VERSION);
 }
 
 $ip = $_SERVER['HTTP_CF_CONNECTING_IP'] ?? $_SERVER['REMOTE_ADDR'];
@@ -120,7 +120,7 @@ function bbserror(string $message): void {
 <center><span style="color:$errortextcolor;font-weight:bold;">$message</span><br>[<a href="index.html">Return</a>]</center>
 <hr>
 <br clear="all">
-<center>- <a href="//github.com/LexiTsunami/SakuraLite">SakuraLite</a> -</center>
+<center>- <a href="//github.com/UnderwoodSoy/SakuraLite">SakuraLite</a> -</center>
 HTML;
     exit;
 }
@@ -224,7 +224,7 @@ $posthtml
 $pagehtml
 <div style="float: right;">[<a href="$sakuralitefile?mode=manage">Manage</a>]</div>
 <br clear="all">
-<center>- <a href="//github.com/LexiTsunami/SakuraLite">SakuraLite</a> -</center>
+<center>- <a href="//github.com/UnderwoodSoy/SakuraLite">SakuraLite</a> -</center>
 HTML;
 }
 
@@ -257,7 +257,7 @@ if ($mode === 'manage') {
 Password: <input type="password" name="managepassword"> <input type="submit" value="Login">
 </form></center>
 <hr>
-<center>- <a href="//github.com/LexiTsunami/SakuraLite">SakuraLite</a> -</center>
+<center>- <a href="//github.com/UnderwoodSoy/SakuraLite">SakuraLite</a> -</center>
 HTML;
         exit;
     }
@@ -306,7 +306,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if (isset($_GET['togglelock'])) {
         if (file_exists($lockfile)) unlink($lockfile);
-        else file_put_contents($lockfile, 'This BBS is running LexiTsunami\'s SakuraLite (https://github.com/LexiTsunami/SakuraLite) and is currently locked! Will you see this Easter Egg?');
+        else file_put_contents($lockfile, 'This BBS is running SakuraLite (https://github.com/UnderwoodSoy/SakuraLite) and is currently locked! Will you see this Easter Egg?');
         header('Location: '.$sakuralitefile.'?mode=manage');
         exit;
     }
