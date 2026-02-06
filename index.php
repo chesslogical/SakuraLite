@@ -1,7 +1,8 @@
 <?php
-// SakuraLite1 - Dynamic Version (Best for Nginx / XAMPP)
-// Forked + Images + Modern Design by Grok (February 2026)
+// SakuraLite1 - Fully Fixed Dynamic Version (Nginx/XAMPP friendly)
+// No static .html files, no external includes, all fixes applied
 
+// === CONFIGURATION ===
 $title = 'SakuraLite1';
 $subtitle = 'Modern BBS with image uploads • Dynamic version';
 $background = '#f8f1e3';
@@ -12,15 +13,14 @@ $posternamecolor = '#006633';
 $errortextcolor = '#d32f2f';
 $defaultname = 'Anonymous';
 $deletionphrase = 'Deleted';
-
 $bulletpoints = [
     'This is a sample bullet point.',
     'Images up to 3 MB supported (JPG, PNG, GIF, WebP)',
-    'Fully dynamic - works great with Nginx'
+    'Dynamic version - no static HTML files needed'
 ];
 
 // Behavior
-$managepassword = 'CHANGETHIS';     // ← CHANGE THIS RIGHT NOW!
+$managepassword = 'CHANGETHIS';  // ← CHANGE THIS NOW!
 $managecookie = 'sakuralite1_manage';
 $datafile = 'sakuralite1.dat';
 $bansfile = 'bans1.dat';
@@ -32,7 +32,7 @@ $commentlimit = 200;
 
 // Image support
 $allowimages = true;
-$maxfilesize = 3 * 1024 * 1024;
+$maxfilesize = 3 * 1024 * 1024; // 3 MB
 $uploadpath = 'uploads/';
 $allowedextensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
 
@@ -51,7 +51,7 @@ if ($allowimages && !is_dir($uploadpath)) {
     mkdir($uploadpath, 0755, true);
 }
 
-// ====================== FUNCTIONS ======================
+// ====================== CORE FUNCTIONS ======================
 function readposts(): array {
     global $datafile;
     if (!file_exists($datafile)) return [];
@@ -103,7 +103,7 @@ function nextnum(): int {
 }
 
 function bbserror(string $message): void {
-    global $title, $background, $textcolor, $fonts;
+    global $title, $background, $textcolor, $fonts, $errortextcolor;
     $pagetitle = $title ?: 'SakuraLite1';
     echo <<<HTML
 <!DOCTYPE html>
@@ -116,7 +116,7 @@ function bbserror(string $message): void {
 <div class="max-w-md w-full bg-white rounded-3xl shadow-xl p-10 text-center">
 <h1 class="text-4xl font-bold mb-4">$pagetitle</h1>
 <p class="text-red-600 text-2xl font-semibold">$message</p>
-<a href="index.php" class="mt-8 inline-block bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-2xl">Return</a>
+<div class="mt-8"><a href="index.php" class="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-2xl font-medium">Return</a></div>
 </div>
 </body>
 </html>
@@ -124,12 +124,12 @@ HTML;
     exit;
 }
 
-// ====================== RENDER PAGE ======================
+// ====================== DYNAMIC PAGE RENDER ======================
 function renderpage(int $page = 0): void {
     global $title, $subtitle, $background, $textcolor, $linkcolor, $fonts,
            $posternamecolor, $defaultname, $forcedanonymity, $deletionphrase,
            $bulletpoints, $allowimages, $uploadpath, $postsperpage,
-           $namelimit, $commentlimit;                     // ← Fixed here
+           $namelimit, $commentlimit;
 
     $allposts = array_reverse(readposts());
     $totalposts = count($allposts);
@@ -258,11 +258,112 @@ $mode = $_GET['mode'] ?? '';
 $page = (int)($_GET['page'] ?? 0);
 
 if ($mode === 'manage') {
-    // (Management panel code - unchanged and working)
-    include 'manage.php';   // Optional: You can move manage code to separate file later
+    $hashedcookie = $_COOKIE[$managecookie] ?? '';
+    $canmanage = false;
+
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['managepassword'])) {
+        if (sha1($_POST['managepassword']) === sha1($managepassword)) {
+            setcookie($managecookie, sha1($managepassword), 0, '/');
+            $canmanage = true;
+        } else {
+            bbserror('Wrong password');
+        }
+    } elseif ($hashedcookie === sha1($managepassword)) {
+        $canmanage = true;
+    }
+
+    if (!$canmanage) {
+        $pagetitle = $title ?: 'SakuraLite1';
+        echo <<<HTML
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><title>$pagetitle — Manage</title>
+<script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-zinc-950 text-white min-h-screen flex items-center justify-center">
+<div class="max-w-md w-full bg-zinc-900 rounded-3xl p-10">
+<h1 class="text-3xl font-bold text-center mb-8">Management</h1>
+<form method="POST" class="space-y-6">
+<input type="password" name="managepassword" placeholder="Password" class="w-full bg-zinc-800 border border-zinc-700 rounded-2xl px-6 py-4 focus:outline-none focus:border-blue-500">
+<button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 py-4 rounded-2xl font-semibold">Login</button>
+</form>
+</div>
+</body></html>
+HTML;
+        exit;
+    }
+
+    $message = '';
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete']) && is_array($_POST['delete'])) {
+        $posts = readposts();
+        foreach ($posts as &$p) {
+            if (in_array($p['now'], $_POST['delete'])) $p['deleted'] = '1';
+        }
+        saveposts($posts);
+        $message = '<div class="bg-green-900 text-green-300 px-6 py-3 rounded-2xl mb-6">Selected posts deleted.</div>';
+    }
+
+    if (isset($_GET['banip'])) {
+        file_put_contents($bansfile, $_GET['banip'] . PHP_EOL, FILE_APPEND | LOCK_EX);
+        $message = '<div class="bg-red-900 text-red-300 px-6 py-3 rounded-2xl mb-6">IP banned.</div>';
+    }
+
+    $posts = readposts();
+    echo <<<HTML
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><title>Manage - $title</title>
+<script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-zinc-950 text-zinc-200">
+<div class="max-w-6xl mx-auto px-6 py-10">
+    <div class="flex justify-between mb-8">
+        <h1 class="text-4xl font-bold">Management Panel</h1>
+        <a href="index.php" class="text-blue-400 hover:underline">← Back to board</a>
+    </div>
+    $message
+    <form method="post">
+    <table class="w-full">
+        <thead><tr class="border-b border-zinc-800">
+            <th class="py-4 px-4 text-left">Select</th>
+            <th>No.</th>
+            <th>Name</th>
+            <th>Time</th>
+            <th>Comment</th>
+            <th>Image</th>
+            <th>Action</th>
+        </tr></thead>
+        <tbody>
+HTML;
+
+    foreach ($posts as $post) {
+        $short = mb_substr($post['comment'], 0, 70) . (mb_strlen($post['comment']) > 70 ? '...' : '');
+        $img = $post['image'] ? '✅' : '';
+        echo "<tr class='border-b border-zinc-800 hover:bg-zinc-900'>
+            <td class='py-4 px-4'><input type='checkbox' name='delete[]' value='{$post['now']}'></td>
+            <td>{$post['num']}</td>
+            <td>" . htmlspecialchars($post['name']) . "</td>
+            <td>{$post['time']}</td>
+            <td>" . htmlspecialchars($short) . "</td>
+            <td>$img</td>
+            <td><a href='?mode=manage&banip={$post['postiphash']}' class='text-red-400 hover:underline text-sm'>Ban IP</a></td>
+        </tr>";
+    }
+
+    echo <<<HTML
+        </tbody>
+    </table>
+    <div class="mt-8">
+        <button type="submit" class="bg-red-600 hover:bg-red-700 px-8 py-3 rounded-2xl font-medium">Delete Selected Posts</button>
+    </div>
+    </form>
+</div>
+</body>
+</html>
+HTML;
     exit;
 }
 
+// ====================== POST HANDLING ======================
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $name    = trim($_POST['name'] ?? $defaultname);
     $comment = trim($_POST['com'] ?? '');
@@ -286,10 +387,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($f['size'] > $maxfilesize) bbserror('Image too large (max 3 MB).');
         $mime = mime_content_type($f['tmp_name']);
         if (!str_starts_with($mime, 'image/')) bbserror('Not a valid image.');
-
+        
         $imagename = date('Ymd_His') . '_' . bin2hex(random_bytes(8)) . '.' . $ext;
-        if (move_uploaded_file($f['tmp_name'], $uploadpath . $imagename)) {
+        $target = $uploadpath . $imagename;
+        if (move_uploaded_file($f['tmp_name'], $target)) {
             $image = $imagename;
+        } else {
+            bbserror('Failed to save image.');
         }
     }
 
@@ -312,4 +416,5 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     exit;
 }
 
+// ====================== SHOW BOARD ======================
 renderpage($page);
